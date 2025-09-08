@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import zipfile
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 import tempfile
 
 # ====== دالة تفك الضغط ======
@@ -18,7 +18,6 @@ def extract_zip(uploaded_file):
 
     return tmpdir
 
-
 # ====== دالة البحث عن الصورة ======
 def find_photo_path(base_dir, photo_filename):
     for dirpath, _, filenames in os.walk(base_dir):
@@ -26,7 +25,6 @@ def find_photo_path(base_dir, photo_filename):
             if fn.lower() == photo_filename.lower():  # تطابق كامل مع الاسم والامتداد
                 return os.path.join(dirpath, fn)
     return None
-
 
 # ====== Streamlit App ======
 st.title("📸 Photo Finder from Excel + ZIP")
@@ -44,11 +42,19 @@ if excel_file and zip_file:
     # فك الصور
     tmpdir = extract_zip(zip_file)
 
-    # تحديد الأعمدة
-    if "Name" in df.columns and "Photo" in df.columns:
+    # محاولة التعرف على أعمدة الاسم والصورة
+    name_col = None
+    photo_col = None
+    for col in df.columns:
+        if str(col).strip().lower() in ["name", "الاسم"]:
+            name_col = col
+        if str(col).strip().lower() in ["photo", "الصورة", "photos", "صورة"]:
+            photo_col = col
+
+    if name_col and photo_col:
         for _, row in df.iterrows():
-            name = row["Name"]
-            photo_filename = str(row["Photo"]).strip()
+            name = str(row[name_col])
+            photo_filename = str(row[photo_col]).strip()
 
             photo_path = find_photo_path(tmpdir, photo_filename)
             if photo_path:
@@ -56,4 +62,4 @@ if excel_file and zip_file:
             else:
                 st.warning(f"📷 Photo not found for '{name}'. Requested: {photo_filename}")
     else:
-        st.error("❌ Excel must contain 'Name' and 'Photo' columns.")
+        st.error(f"❌ Excel must contain a 'Name/الاسم' column and a 'Photo/الصورة' column. Found: {list(df.columns)}")
