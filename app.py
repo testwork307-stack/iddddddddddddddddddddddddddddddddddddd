@@ -146,21 +146,13 @@ def draw_bold_text(draw, xy, text, font, fill="black", anchor="rt"):
         draw_aligned_text(draw, (xy[0] + dx, xy[1] + dy), text, font, fill=fill, anchor=anchor)
 
 
-def find_photo_path(root_dir: str, requested: str) -> Optional[str]:
-    """Find photo by stem match (case/ext-insensitive), search recursively."""
-    if not requested:
-        return None
-    req_stem = Path(str(requested)).stem.lower()
-    candidates = []
-    for dirpath, _, filenames in os.walk(root_dir):
+def find_photo_path(base_dir, photo_filename):
+    for dirpath, _, filenames in os.walk(base_dir):
         for fn in filenames:
-            if Path(fn).stem.lower() == req_stem:
-                candidates.append(os.path.join(dirpath, fn))
-    if candidates:
-        order = {".png": 0, ".jpg": 1, ".jpeg": 2, ".bmp": 3}
-        candidates.sort(key=lambda p: order.get(Path(p).suffix.lower(), 9))
-        return candidates[0]
+            if fn.lower() == photo_filename.lower():  # تطابق كامل مع الامتداد
+                return os.path.join(dirpath, fn)
     return None
+
 
 
 def crop_face_and_shoulders(image_path: str) -> Optional[Image.Image]:
